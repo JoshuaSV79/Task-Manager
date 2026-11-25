@@ -1,82 +1,99 @@
 # Gestor de tareas con SQLite y Flutter
 
-Implementación de la práctica usando **Drift + drift_flutter**. La base es local; no hay servidor, API REST ni sincronización entre dispositivos.
+Aplicación local para crear, consultar, editar y eliminar tareas. Utiliza Drift sobre SQLite y ofrece una interfaz desarrollada con Flutter.
 
-## Qué incluye
+## Funcionalidades
 
-- Tabla `tareas`: `id` (INTEGER autoincremental), `titulo` (TEXT) y `completada` (INTEGER/booleano de SQLite).
-- Altas con validación de título no vacío.
-- Consulta reactiva con `StreamBuilder` y `watch()`.
-- Edición del título, cambio de estado y eliminación por ID.
-- Manejo básico de errores y liberación del controlador de texto.
-- Pruebas con SQLite en memoria: inicio de pantalla, rechazo de título vacío y persistencia/actualización de datos en la base durante la prueba.
+- Crear tareas con validación de título.
+- Mostrar las tareas mediante consultas reactivas.
+- Marcar tareas como completadas o pendientes.
+- Editar títulos y eliminar tareas.
+- Conservar los datos localmente entre ejecuciones.
+- Ejecutar pruebas de datos y de interfaz.
 
-## Preparación desde la base entregada
+## Tecnologías
 
-El ZIP de la consigna no es un proyecto Flutter completo: no incluye `pubspec.yaml` ni las carpetas de plataforma. Crea el esqueleto con Flutter y después copia/sustituye `lib/`, `test/`, `pubspec.yaml` y `analysis_options.yaml` de este proyecto:
+- Flutter y Dart
+- Drift
+- SQLite
+- drift_flutter
+- Pruebas con SQLite en memoria
+
+## Estructura
+
+- `lib/`: código fuente de la aplicación.
+- `lib/data/`: acceso a datos y configuración de la base.
+- `test/`: pruebas automatizadas.
+- `web/`: recursos necesarios para ejecutar la aplicación en navegadores.
+- `pubspec.yaml`: dependencias y configuración del proyecto.
+
+## Requisitos previos
+
+- Flutter SDK instalado.
+- Dart incluido con Flutter.
+- Git opcional para trabajar con el repositorio.
+- Navegador Chrome para ejecutar la versión web.
+
+## Preparación
+
+Después de generar o descargar el proyecto:
 
 ```powershell
-flutter create gestor_tareas_local
-cd gestor_tareas_local
-# Copia aquí los archivos de este entregable, sustituyendo lib/ y test/.
 flutter pub get
 dart run build_runner build --delete-conflicting-outputs
 flutter analyze
 flutter test
 ```
 
-El archivo `lib/data/app_database.g.dart` es generado por `build_runner`; no se edita manualmente.
+El archivo `lib/data/app_database.g.dart` se genera automáticamente y no debe modificarse manualmente.
 
-## Configuración de Flutter Web (obligatoria)
+## Ejecutar la aplicación
 
-La configuración Dart apunta a estos dos archivos dentro de `web/`:
+### Web
 
-- `sqlite3.wasm`
-- `drift_worker.js`
-
-Deben obtenerse de una **misma versión/release compatible con la versión de `drift` resuelta en `pubspec.lock`**. La documentación oficial de Drift explica la descarga/compilación y el worker. No reutilices archivos de una versión distinta.
-
-Después de crear el proyecto Flutter, coloca ambos archivos en `web/`. El directorio tendrá, entre otros, `index.html`, `manifest.json`, `sqlite3.wasm` y `drift_worker.js`.
-
-Para probar:
+Coloca en `web/` los archivos `sqlite3.wasm` y `drift_worker.js`, usando una versión compatible con la versión de Drift del proyecto.
 
 ```powershell
 flutter run -d chrome
 ```
 
-Drift requiere que el servidor entregue `sqlite3.wasm` con `Content-Type: application/wasm`. `flutter run` lo configura por defecto. En despliegue, verifica ese encabezado. Los encabezados COOP/COEP pueden habilitar el almacenamiento OPFS de mejor rendimiento, pero no son imprescindibles: sin ellos Drift puede usar una alternativa compatible. Revisa la documentación antes de configurar esos encabezados.
+El servidor web debe entregar `sqlite3.wasm` con el tipo de contenido `application/wasm`.
 
-## Ejecución y verificación
+### Escritorio o móvil
+
+Consulta los dispositivos disponibles y ejecuta la aplicación en uno:
 
 ```powershell
 flutter devices
-flutter run -d chrome
-# En otra plataforma nativa disponible:
 flutter run -d <id-del-dispositivo>
-
-flutter analyze
-flutter test
 ```
 
-Pruebas manuales requeridas por la práctica:
-1. Crear tres tareas; cerrar por completo y abrir de nuevo (P1).
-2. Cambiar una a completada; reiniciar (P2).
-3. Editar título; reiniciar (P3).
-4. Eliminar una; reiniciar (P4).
-5. Intentar título vacío o con espacios (P5).
-6. En Web, recargar y reabrir en el mismo origen y perfil (P6).
+## Persistencia
 
-**No declares una plataforma como probada hasta ejecutar esas comprobaciones.** En el reporte indica por separado plataformas ejecutadas y plataformas solo previstas. iOS/macOS requieren macOS; Windows y Linux requieren sus respectivos sistemas para compilar.
+En plataformas nativas, la base se guarda en el directorio privado de documentos de la aplicación. En Web, los datos se almacenan en el navegador asociado al origen y perfil utilizados.
 
-## Diseño
+El cierre o reinicio de la aplicación no elimina los datos.
 
-`TareasPage` solo presenta la interfaz y llama a la capa de datos. `AppDatabase` contiene el esquema y las operaciones Drift. Las consultas reactivas notifican a la interfaz cuando cambia la tabla, evitando consultas dentro de `build()`.
+## Arquitectura
 
-En plataformas nativas, `drift_flutter` guarda `gestor_tareas.sqlite` en el directorio de documentos de la aplicación. En Web, Drift utiliza WebAssembly y almacenamiento del navegador asociado al origen/perfil; el modo privado o borrar datos del sitio puede eliminar o impedir conservar esos datos.
+La interfaz presenta las tareas y delega las operaciones a la capa de datos. `AppDatabase` define el esquema, las consultas y las acciones sobre SQLite.
 
-## Fuentes técnicas
+Las consultas reactivas permiten que la interfaz se actualice automáticamente al crear, modificar o eliminar registros.
 
-- https://drift.simonbinder.eu/ — tablas, consultas tipadas, generación y consultas reactivas.
-- https://drift.simonbinder.eu/platforms/web/ — SQLite compilado a WASM, worker y almacenamiento web.
-- https://pub.dev/packages/drift_flutter — apertura multiplataforma de la base.
-- https://docs.flutter.dev/testing/overview — diferencias entre pruebas unitarias, de widgets e integración.
+## Pruebas manuales sugeridas
+
+1. Crear una tarea y reiniciar la aplicación.
+2. Marcar una tarea como completada y reiniciar.
+3. Editar el título de una tarea y reiniciar.
+4. Eliminar una tarea y reiniciar.
+5. Intentar crear una tarea vacía o con solo espacios.
+6. Recargar la aplicación web y comprobar que los datos continúan disponibles.
+
+Los resultados deben indicar qué plataformas se probaron realmente y cuáles fueron solo previstas.
+
+## Referencias
+
+- [Documentación de Drift](https://drift.simonbinder.eu/)
+- [Drift en la Web](https://drift.simonbinder.eu/platforms/web/)
+- [Paquete drift_flutter](https://pub.dev/packages/drift_flutter)
+- [Pruebas en Flutter](https://docs.flutter.dev/testing/overview)
